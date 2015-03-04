@@ -32,7 +32,7 @@ namespace WrapRec.Experiments
             var config = new CsvConfiguration()
             {
                 Delimiter = "::",
-                HasHeaderRecord = true
+                HasHeaderRecord = false
             };
 
             // load data
@@ -48,7 +48,7 @@ namespace WrapRec.Experiments
             var splitter = new RatingSimpleSplitter(container);
 
             //var recommender = new MediaLiteRatingPredictor(new MatrixFactorization());
-            var recommender = new LibFmTrainTester(libFmPath: "LibFm.Net.64.exe");
+            var recommender = new LibFmTrainTester(libFmPath: "LibFm.Net.64.exe") { CreateBinaryFiles = false };
 
             // evaluation
             var ctx = new EvalutationContext<ItemRating>(recommender, splitter);

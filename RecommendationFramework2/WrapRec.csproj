@@ -166,6 +166,7 @@
     <Compile Include="IEnumerableExtensions.cs" />
     <Compile Include="LibFmFeatureBuilder.cs" />
     <Compile Include="LibSvmFeatureBuilder.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="MapEnabledEntity.cs" />
     <Compile Include="Evaluation\EvaluationPipeline.cs" />
     <Compile Include="Evaluation\EvalutationContext.cs" />

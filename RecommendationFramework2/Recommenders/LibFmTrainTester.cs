@@ -26,7 +26,7 @@ namespace WrapRec.Recommenders
         public FmLearnigAlgorithm LearningAlgorithm { get; set; }
         public string TrainFile { get; set; }
         public string TestFile { get; set; }
-
+        public bool CreateBinaryFiles { get; set; }
         public double RMSE { get; private set; }
 
         string _experimentId;
@@ -38,7 +38,7 @@ namespace WrapRec.Recommenders
             double learningRate = 0.05, 
             int numIterations = 30, 
             string dimensions = "1,1,8", 
-            FmLearnigAlgorithm alg = FmLearnigAlgorithm.MCMC ,
+            FmLearnigAlgorithm alg = FmLearnigAlgorithm.ALS,
             string regularization = "0,0,0.1",
             string trainFile = "",
             string testFile = "")
@@ -62,6 +62,8 @@ namespace WrapRec.Recommenders
             Regularization = regularization;
             TrainFile = trainFile;
             TestFile = testFile;
+
+            CreateBinaryFiles = false;
         }
 
         public void TrainAndTest(IEnumerable<ItemRating> trainSet, IEnumerable<ItemRating> testSet)
@@ -79,6 +81,12 @@ namespace WrapRec.Recommenders
             // converting train and test data to libFm files becuase libfm.exe only get file names as input
             SaveLibFmFile(trainSet, TrainFile);
             SaveLibFmFile(testSet, TestFile);
+
+            if (CreateBinaryFiles)
+            {
+                ConvertAndTransform(TrainFile);
+                ConvertAndTransform(TestFile);
+            }
 
             // initialize the process
             var libFm = new Process
@@ -104,7 +112,7 @@ namespace WrapRec.Recommenders
 
                 if (data != null && (data.StartsWith("Loading") || data.StartsWith("#")))
                 {
-                    Console.WriteLine(dataLine.Data);
+                    Log.Logger.Trace(dataLine.Data);
 
                     if (data.StartsWith("#Iter"))
                     {
@@ -124,11 +132,17 @@ namespace WrapRec.Recommenders
                 }
             };
 
+            var startTime = DateTime.Now;
+            
             libFm.Start();
             libFm.BeginOutputReadLine();
             libFm.WaitForExit();
 
-            Console.WriteLine("Lowest RMSE on test set reported by LibFm is: {0:0.0000} at iteration {1}", lowestRMSE, lowestIteration);
+            var duration = (int)DateTime.Now.Subtract(startTime).TotalMilliseconds;
+
+            Log.Logger.Info("Lowest RMSE on test set reported by LibFm is: {0:0.0000} at iteration {1}", lowestRMSE, lowestIteration);
+            Log.Logger.Info("LibFm pure train and test time: {0:N0} ms", duration);
+
             RMSE = lowestRMSE;
             UpdateTestSet(testSet, testOutput);
 
@@ -142,8 +156,57 @@ namespace WrapRec.Recommenders
             File.WriteAllLines(fileName, output);
         }
 
+        public void ConvertAndTransform(string libfmFile)
+        {
+            string convertArgs = string.Format("--ifile {0} --ofilex {0}.bin.x --ofiley {0}.bin.y", libfmFile);
+            string transposeArgs = string.Format("--ifile {0}.bin.x --ofile {0}.bin.xt", libfmFile);
+
+            var convert = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "convert.exe",
+                    Arguments = convertArgs,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            var transpose = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "transpose.exe",
+                    Arguments = transposeArgs,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+           
+            Log.Logger.Trace("Converting LibFm file to binary format. Input file: {0}", libfmFile);
+            convert.Start();
+            convert.WaitForExit();
+            
+            Log.Logger.Trace("Transposing LibFm binary file {0}.bin.x", libfmFile);
+            transpose.Start();
+            transpose.WaitForExit();
+
+            Log.Logger.Trace("Transposing finished.");
+        }
+
+
         private string BuildArguments(string trainFile, string testFile, string testOutput)
         {
+            if (CreateBinaryFiles)
+            {
+                trainFile += ".bin";
+                testFile += ".bin";
+            }
+
             return String.Format("-task r -train {0} -test {1} -method {2} -iter {3} -dim {4} -learn_rate {5} -out {6} -regular {7}",
                 trainFile, testFile, LearningAlgorithm.ToString().ToLower(), Iterations, Dimensions, LearningRate, testOutput, Regularization);
         }
