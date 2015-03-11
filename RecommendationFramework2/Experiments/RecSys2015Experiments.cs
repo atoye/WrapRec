@@ -48,7 +48,9 @@ namespace WrapRec.Experiments
             var splitter = new RatingSimpleSplitter(container);
 
             //var recommender = new MediaLiteRatingPredictor(new MatrixFactorization());
-            var recommender = new LibFmTrainTester(libFmPath: "LibFm.Net.64.exe") { CreateBinaryFiles = false };
+            var recommender = new LibFmTrainTester(libFmPath: "LibFm.Net.64.exe") { CreateBinaryFiles = true };
+            recommender.Blocks.Add(new UsersBlock());
+            recommender.Blocks.Add(new ItemsBlock());
 
             // evaluation
             var ctx = new EvalutationContext<ItemRating>(recommender, splitter);

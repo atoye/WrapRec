@@ -10,7 +10,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LinqLib.Sequence;
-using WrapRec.Utilities;
 using MyMediaLite.Data;
 
 namespace WrapRec.Experiments

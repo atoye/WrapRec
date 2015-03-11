@@ -135,12 +135,15 @@
     <Compile Include="DatasetReaderWithFilter.cs" />
     <Compile Include="Data\EpinionsCrossDomainDataContainer.cs" />
     <Compile Include="Data\ISplitter.cs" />
+    <Compile Include="Data\ItemsBlock.cs" />
+    <Compile Include="Data\LibFmBlock.cs" />
     <Compile Include="Data\LibFmProcessor.cs" />
     <Compile Include="Data\MovieLensCrossDomainContainer.cs" />
     <Compile Include="Data\PositiveFeedbackSimpleSplitter.cs" />
     <Compile Include="Data\RatingComparer.cs" />
     <Compile Include="Data\Relation.cs" />
     <Compile Include="Data\RatingSimpleSplitter.cs" />
+    <Compile Include="Data\UsersBlock.cs" />
     <Compile Include="Domain.cs" />
     <Compile Include="Entities\EpinionItemRating.cs" />
     <Compile Include="Entities\ItemRatingWithRelations.cs" />

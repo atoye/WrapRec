@@ -7,6 +7,7 @@ using MyMediaLite.Data;
 using System.IO;
 using System.Diagnostics;
 using LinqLib.Sequence;
+using WrapRec.Data;
 
 namespace WrapRec.Recommenders
 {
@@ -27,6 +28,7 @@ namespace WrapRec.Recommenders
         public string TrainFile { get; set; }
         public string TestFile { get; set; }
         public bool CreateBinaryFiles { get; set; }
+        public List<LibFmBlock> Blocks { get; private set; }
         public double RMSE { get; private set; }
 
         string _experimentId;
@@ -38,7 +40,7 @@ namespace WrapRec.Recommenders
             double learningRate = 0.05, 
             int numIterations = 30, 
             string dimensions = "1,1,8", 
-            FmLearnigAlgorithm alg = FmLearnigAlgorithm.ALS,
+            FmLearnigAlgorithm alg = FmLearnigAlgorithm.MCMC,
             string regularization = "0,0,0.1",
             string trainFile = "",
             string testFile = "")
@@ -62,7 +64,7 @@ namespace WrapRec.Recommenders
             Regularization = regularization;
             TrainFile = trainFile;
             TestFile = testFile;
-
+            Blocks = new List<LibFmBlock>();
             CreateBinaryFiles = false;
         }
 
@@ -79,13 +81,18 @@ namespace WrapRec.Recommenders
             string testOutput = _dataStorePath + "test.out" + expIdExtension;
 
             // converting train and test data to libFm files becuase libfm.exe only get file names as input
-            SaveLibFmFile(trainSet, TrainFile);
-            SaveLibFmFile(testSet, TestFile);
+            SaveLibFmFile(trainSet, TrainFile, true);
+            SaveLibFmFile(testSet, TestFile, false);
 
             if (CreateBinaryFiles)
             {
                 ConvertAndTransform(TrainFile);
                 ConvertAndTransform(TestFile);
+            }
+
+            if (Blocks.Count > 0)
+            { 
+                
             }
 
             // initialize the process
@@ -132,8 +139,10 @@ namespace WrapRec.Recommenders
                 }
             };
 
+            Log.Logger.Trace("libfm {0}", libFm.StartInfo.Arguments);
+
             var startTime = DateTime.Now;
-            
+
             libFm.Start();
             libFm.BeginOutputReadLine();
             libFm.WaitForExit();
@@ -150,11 +159,52 @@ namespace WrapRec.Recommenders
             File.WriteAllLines(_dataStorePath + "test.act", testSet.Select(ir => ir.Rating.ToString()).ToList());
         }
 
-        private void SaveLibFmFile(IEnumerable<ItemRating> dataset, string fileName)
+        private void SaveLibFmFile(IEnumerable<ItemRating> dataset, string libfmFile, bool isTrain)
         {
-            var output = dataset.Select(ir => FeatureBuilder.GetLibFmFeatureVector(ir)).ToList();
-            File.WriteAllLines(fileName, output);
+            List<string> featVectors;
+
+            if (Blocks.Count > 0)
+            {
+                List<string>[] blockIndices = new List<string>[Blocks.Count];
+                for (int i = 0; i < Blocks.Count; i++)
+                {
+                    blockIndices[i] = new List<string>();
+                }
+
+                // update blocks while creating feature vectors
+                featVectors = dataset.Select(ir => 
+                {
+                    for (int i = 0; i < Blocks.Count; i++)
+                    {
+                        blockIndices[i].Add(Blocks[i].UpdateBlock(ir).ToString());
+                    }
+
+                    // only return ratings (class variable), the prediction variables zijn niet nodig
+                    return ir.Rating.ToString();
+                }).ToList();
+
+                // save block index files and actual blocks
+                for (int i = 0; i < Blocks.Count; i++)
+                {
+                    Log.Logger.Trace("Creating Block files for Block: {0}", Blocks[i].Name);
+                    
+                    // The .bin extension is added for name convension that is expected by libFm and to be compatible with ConvertAndTransform convension
+                    string blockFile = string.Format("{0}.bin.{1}", Blocks[i].Name, isTrain ? "train" : "test");
+                    File.WriteAllLines(blockFile, blockIndices[i]);
+
+                    File.WriteAllLines(Blocks[i].Name, Blocks[i].Blocks);
+                    ConvertAndTransform(Blocks[i].Name);
+                }
+            }
+            else
+            {
+                featVectors = dataset.Select(ir => FeatureBuilder.GetLibFmFeatureVector(ir)).ToList();
+            }
+
+            File.WriteAllLines(libfmFile, featVectors);
         }
+
+        
 
         public void ConvertAndTransform(string libfmFile)
         {
@@ -198,7 +248,6 @@ namespace WrapRec.Recommenders
             Log.Logger.Trace("Transposing finished.");
         }
 
-
         private string BuildArguments(string trainFile, string testFile, string testOutput)
         {
             if (CreateBinaryFiles)
@@ -207,8 +256,14 @@ namespace WrapRec.Recommenders
                 testFile += ".bin";
             }
 
-            return String.Format("-task r -train {0} -test {1} -method {2} -iter {3} -dim {4} -learn_rate {5} -out {6} -regular {7}",
-                trainFile, testFile, LearningAlgorithm.ToString().ToLower(), Iterations, Dimensions, LearningRate, testOutput, Regularization);
+            string blockParams = "";
+            if (Blocks.Count > 0)
+            {
+                blockParams = " -relation " + Blocks.Select(b => b.Name + ".bin").Aggregate((a, b) => a + "," + b);
+            }
+
+            return String.Format("-task r -train {0} -test {1} -method {2} -iter {3} -dim {4} -learn_rate {5} -out {6} -regular {7}{8}",
+                trainFile, testFile, LearningAlgorithm.ToString().ToLower(), Iterations, Dimensions, LearningRate, testOutput, Regularization, blockParams);
         }
 
         private void UpdateTestSet(IEnumerable<ItemRating> testSet, string testOutput)
