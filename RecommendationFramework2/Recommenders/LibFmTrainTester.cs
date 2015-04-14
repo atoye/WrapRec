@@ -149,8 +149,12 @@ namespace WrapRec.Recommenders
 
             var duration = (int)DateTime.Now.Subtract(startTime).TotalMilliseconds;
 
-            Log.Logger.Info("Lowest RMSE on test set reported by LibFm is: {0:0.0000} at iteration {1}", lowestRMSE, lowestIteration);
-            Log.Logger.Info("LibFm pure train and test time: {0:N0} ms", duration);
+            Log.Logger.Trace("Lowest RMSE on test set reported by LibFm is: {0:0.0000} at iteration {1}", lowestRMSE, lowestIteration);
+            Log.Logger.Trace("LibFm pure train and test time: {0:N0} ms", duration);
+
+            Duration = duration;
+            LowestIteration = lowestIteration;
+            LibFmArgs = libFm.StartInfo.Arguments;
 
             RMSE = lowestRMSE;
             UpdateTestSet(testSet, testOutput);
@@ -158,6 +162,10 @@ namespace WrapRec.Recommenders
             // write actual ratings in the test set
             File.WriteAllLines(_dataStorePath + "test.act", testSet.Select(ir => ir.Rating.ToString()).ToList());
         }
+
+        public int Duration { get; set; }
+        public int LowestIteration { get; set; }
+        public string LibFmArgs { get; set; }
 
         private void SaveLibFmFile(IEnumerable<ItemRating> dataset, string libfmFile, bool isTrain)
         {
@@ -279,6 +287,28 @@ namespace WrapRec.Recommenders
             }
         }
 
+        public void PrintConfiguration()
+        { 
+        
+        }
+
+        public override string ToString()
+        {
+            // LearningMethod Dimensionality NumIteration LearningRate NoBlocks BinaryInput
+            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
+                LearningAlgorithm.ToString(),
+                Dimensions,
+                Iterations,
+                LowestIteration + 1,
+                LearningRate,
+                Blocks.Count,
+                CreateBinaryFiles ? "yes" : "no");
+        }
+
+        public static string GetToStringHeader()
+        {
+            return "LearningMethod\tDimensionality\tNumIteration\tLowestIteration\tLearningRate\tNoBlocks\tBinaryInput";
+        }
     }
 
     public enum FmLearnigAlgorithm

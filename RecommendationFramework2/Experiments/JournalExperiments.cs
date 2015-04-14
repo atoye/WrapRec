@@ -24,7 +24,7 @@ namespace WrapRec.Experiments
         string _ecirTrain = @"D:\Data\Datasets\Amazon\Old\books_selected-ex3-train0.75.libfm";
         string _ecirTest = @"D:\Data\Datasets\Amazon\Old\books_selected-ex3-test0.75.libfm";
 
-        public void Run(int testNum = 3)
+        public void Run(int testNum = 7)
         {
             var startTime = DateTime.Now;
 
@@ -61,7 +61,7 @@ namespace WrapRec.Experiments
                     SplitAmazon();
                     break;
                 case(11):
-                    TestAmazonAllDomains2();
+                    TestAmazonAllDomains();
                     break;
                 case(12):
                     ShuffleAndRecreate();
@@ -223,19 +223,24 @@ namespace WrapRec.Experiments
                 var startTime = DateTime.Now;
 
                 // step 2: recommender
-                ITrainTester<ItemRating> recommender;
-                CrossDomainLibFmFeatureBuilder featureBuilder = null;
+                //LibFmTrainTester recommender = new LibFmTrainTester(experimentId: num.ToString()) { CreateBinaryFiles = true };
+                var recommender = new MediaLiteRatingPredictor(new ItemKNN() { K = 5, NumIter = 10 });
+                
+                //CrossDomainLibFmFeatureBuilder featureBuilder = null;
+            //    recommender.Blocks.Add(new ItemsBlock());
 
-                if (num == 0)
-                {
-                    recommender = new LibFmTrainTester(experimentId: num.ToString());
-                }
-                else
-                {
-                    featureBuilder = new CrossDomainLibFmFeatureBuilder(bookDomain, num);
+             //   if (num == 0)
+             //   {
+              //      recommender.Blocks.Add(new UsersBlock());
+                    //recommender = new LibFmTrainTester(experimentId: num.ToString());
+               // }
+                //else
+              //  {
+                    //featureBuilder = new CrossDomainLibFmFeatureBuilder(bookDomain, num);
                     //featureBuilder.LoadCachedUserData(_musicUsersPath);
-                    recommender = new LibFmTrainTester(experimentId: num.ToString(), featureBuilder: featureBuilder);
-                }
+                    //recommender = new LibFmTrainTester(experimentId: num.ToString(), featureBuilder: featureBuilder);
+               //     recommender.Blocks.Add(new CrossDomainUsersBlock(bookDomain, num));
+               // }
 
                 // step3: evaluation
                 var ctx = new EvalutationContext<ItemRating>(recommender, splitter);
@@ -251,6 +256,7 @@ namespace WrapRec.Experiments
 
                 var duration = DateTime.Now.Subtract(startTime);
                 durations.Add(((int)duration.TotalMilliseconds).ToString());
+                //durations.Add(recommender.Duration.ToString());
             }
 
             Console.WriteLine("NumAuxRatings\tRMSE\tMAE\tDuration");
@@ -271,15 +277,15 @@ namespace WrapRec.Experiments
 
             var container = new CrossDomainDataContainer();
 
-            var bookDomain = new Domain("book", true);
+            var bookDomain = new Domain("book");
             var musicDomain = new Domain("music");
-            var dvdDomain = new Domain("dvd");
+            var dvdDomain = new Domain("dvd", true);
             var videoDomain = new Domain("video");
 
-            var trainReader = new CsvReader(Paths.AmazonBooksTrain75, config, bookDomain);
-            var testReader = new CsvReader(Paths.AmazonBooksTest25, config, bookDomain, true);
+            var trainReader = new CsvReader(Paths.AmazonDvdTrain75, config, dvdDomain);
+            var testReader = new CsvReader(Paths.AmazonDvdTest25, config, dvdDomain, true);
             var musicReader = new CsvReader(Paths.AmazonMusicRatings, config, musicDomain);
-            var dvdReader = new CsvReader(Paths.AmazonDvdRatings, config, dvdDomain);
+            var bookReader = new CsvReader(Paths.AmazonBooksRatings, config, bookDomain);
             var videoReader = new CsvReader(Paths.AmazonVideoRatings, config, videoDomain);
 
             //var tempReader = new LibFmReader(_ecirTrain, _ecirTest) { MainDomain = bookDomain, AuxDomain = musicDomain, UserDataPath = _musicUsersPath };
@@ -287,7 +293,7 @@ namespace WrapRec.Experiments
             trainReader.LoadData(container);
             testReader.LoadData(container);
             musicReader.LoadData(container);
-            dvdReader.LoadData(container);
+            bookReader.LoadData(container);
             videoReader.LoadData(container);
             //tempReader.LoadData(container);
             
@@ -309,18 +315,21 @@ namespace WrapRec.Experiments
                 var startTime = DateTime.Now;
                 
                 // step 2: recommender
-                ITrainTester<ItemRating> recommender;
-                CrossDomainLibFmFeatureBuilder featureBuilder = null;
+                LibFmTrainTester recommender = new LibFmTrainTester(experimentId: num.ToString()) {CreateBinaryFiles = true};
+                recommender.Blocks.Add(new ItemsBlock());
+                //CrossDomainLibFmFeatureBuilder featureBuilder = null;
 
                 if (num == 0)
                 {
-                    recommender = new LibFmTrainTester(experimentId: num.ToString());
+                    //recommender = new LibFmTrainTester(experimentId: num.ToString());
+                    recommender.Blocks.Add(new UsersBlock());
                 }
                 else
                 {
-                    featureBuilder = new CrossDomainLibFmFeatureBuilder(bookDomain, num);
+                    //featureBuilder = new CrossDomainLibFmFeatureBuilder(bookDomain, num);
                     //featureBuilder.LoadCachedUserData(_musicUsersPath);
-                    recommender = new LibFmTrainTester(experimentId: num.ToString(), featureBuilder: featureBuilder);
+                    //recommender = new LibFmTrainTester(experimentId: num.ToString(), featureBuilder: featureBuilder);
+                    recommender.Blocks.Add(new CrossDomainUsersBlock(dvdDomain, num));
                 }
 
                 // step3: evaluation
@@ -329,14 +338,13 @@ namespace WrapRec.Experiments
                 ep.Evaluators.Add(new RMSE());
                 ep.Evaluators.Add(new MAE());
                 ep.Run();
-
-                //File.WriteAllLines("maps.txt", featureBuilder.Mapper.OriginalIDs.Zip(featureBuilder.Mapper.InternalIDs, (f, s) => f + "\t" + s));
-                
+               
                 rmse.Add(ctx["RMSE"].ToString());
                 mae.Add(ctx["MAE"].ToString());
 
-                var duration = DateTime.Now.Subtract(startTime);
-                durations.Add(((int)duration.TotalMilliseconds).ToString());
+                //var duration = DateTime.Now.Subtract(startTime);
+                //durations.Add(((int)duration.TotalMilliseconds).ToString());
+                durations.Add(recommender.Duration.ToString());
             }
 
             Console.WriteLine("NumAuxRatings\tRMSE\tMAE\tDuration");

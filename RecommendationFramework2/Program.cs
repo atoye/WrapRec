@@ -15,6 +15,7 @@ using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Stats;
 using WrapRec.Utilities;
 using System.Diagnostics;
+using WrapRec.RecSys2015;
 
 namespace WrapRec
 {
@@ -30,7 +31,10 @@ namespace WrapRec
             //(new Journal2014Experiments()).Run();
             //(new FreeLunchExperiments()).Run();
             //(new TrustExperiments2()).Run();
-            (new RecSys2015Experiments()).Run();
+            //(new RecSys2015Experiments()).Run();
+            //AmazonContainer.PrepareDatasets();
+            //(new RecSys2015.Experiments("log.txt")).Run();
+            ResultAnalyzer.Run();
 
             Console.WriteLine("Finished!.");
 

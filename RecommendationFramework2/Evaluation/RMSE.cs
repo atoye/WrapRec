@@ -24,7 +24,7 @@ namespace WrapRec.Evaluation
 
             context["RMSE"] = Math.Sqrt(sum / testset.Count());
 
-            Console.WriteLine(string.Format("RMSE: {0:0.0000}", context["RMSE"]));
+            //Console.WriteLine(string.Format("RMSE: {0:0.0000}", context["RMSE"]));
         }
     }
 }

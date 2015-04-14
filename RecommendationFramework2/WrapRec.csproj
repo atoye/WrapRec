@@ -129,6 +129,7 @@
     <Compile Include="Data\CrossDomainDataContainer.cs" />
     <Compile Include="CrossDomainLibFmFeatureBuilder.cs" />
     <Compile Include="Data\CrossDomainSimpleSplitter.cs" />
+    <Compile Include="Data\CrossDomainUsersBlock.cs" />
     <Compile Include="Data\DataContainer.cs" />
     <Compile Include="Dataset.cs" />
     <Compile Include="DatasetExtensions.cs" />
@@ -218,6 +219,14 @@
     <Compile Include="Recommenders\LibSvmClassifier.cs" />
     <Compile Include="Recommenders\MediaLiteItemRecommender.cs" />
     <Compile Include="Recommenders\MediaLiteRatingPredictor.cs" />
+    <Compile Include="RecSys2015\AmazonAdapter.cs" />
+    <Compile Include="RecSys2015\AmazonDataContainer.cs" />
+    <Compile Include="RecSys2015\AmazonReader.cs" />
+    <Compile Include="RecSys2015\AmazonSplitter.cs" />
+    <Compile Include="RecSys2015\Experiments.cs" />
+    <Compile Include="RecSys2015\LibFmTrainTesterBuilder.cs" />
+    <Compile Include="RecSys2015\ResultAnalyzer.cs" />
+    <Compile Include="RecSys2015\TestConfig.cs" />
     <Compile Include="Relation.cs" />
     <Compile Include="TrustAwareLibFmFeatureBuilder.cs" />
     <Compile Include="User.cs" />
@@ -256,6 +265,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -24,7 +24,7 @@ namespace WrapRec.Evaluation
 
             context["MAE"] = Math.Sqrt(sum / testset.Count());
 
-            Console.WriteLine(string.Format("MAE: {0:0.0000}", context["MAE"]));
+            //Console.WriteLine(string.Format("MAE: {0:0.0000}", context["MAE"]));
         }
     }
 }

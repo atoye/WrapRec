@@ -136,15 +136,15 @@ namespace WrapRec.Data
             foreach (var d in Domains.Values)
             {
                 Console.WriteLine(d.ToString());
-                if (!d.IsTarget)
+                //if (!d.IsTarget)
                 {
-                    var domainUserIds = d.Ratings.Select(r => r.User.Id).Distinct().ToList();
+                    //var domainUserIds = d.Ratings.Select(r => r.User.Id).Distinct().ToList();
                     //int numIntersectUsers = domainUserIds.Intersect(targetUserIds).Count();
                     //Console.WriteLine("Num users in target domain: {0}\n", numIntersectUsers);
                 }
             }
             
-            Console.WriteLine("Data statistics: \nNum Test Samples: {0}\n", Ratings.Where(r => r.IsTest == true).Count());
+            //Console.WriteLine("Data statistics: \nNum Test Samples: {0}\n", Ratings.Where(r => r.IsTest == true).Count());
 
             //var t = Ratings.Select(ir => long.Parse(ir.GetProperty("timestamp")));
             //Console.WriteLine("Min date: {0}, Max date: {1}", t.Min().FromUnixEpoch(), t.Max().FromUnixEpoch());

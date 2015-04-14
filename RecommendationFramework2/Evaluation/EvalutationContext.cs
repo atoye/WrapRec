@@ -10,25 +10,58 @@ namespace WrapRec.Evaluation
     public class EvalutationContext<T>
     {
         Dictionary<string, object> _items;
-        
-        public IModel Model { get; set; }
+        IModel _model;
+        ISplitter<T> _splitter;
+
         public IDataset<T> Dataset { get; set; }
-        public ISplitter<T> Splitter { get; set; }
+
+        public IModel Model 
+        {
+            get
+            {
+                return _model;
+            }
+            set 
+            {
+                _model = value;
+                // When the model or splitter is updated the IsTested flag is set to false
+                IsTested = false;
+            }
+        }
+
+        public ISplitter<T> Splitter 
+        {
+            get
+            {
+                return _splitter;
+            }
+            set
+            {
+                _splitter = value;
+                // When the model or splitter is updated the IsTested flag is set to false
+                IsTested = false;
+            }
+        }
         public bool IsTested { get; set; }
 
-        [Obsolete("Use EvalutationContext(IModel model, ISplitter<T> splitter) constructor instead.")]
-        public EvalutationContext(IModel model, IDataset<T> dataset)
+        public EvalutationContext()
         {
-            Model = model;
-            Dataset = dataset;
             _items = new Dictionary<string, object>();  
         }
 
+        [Obsolete("Use EvalutationContext(IModel model, ISplitter<T> splitter) constructor instead.")]
+        public EvalutationContext(IModel model, IDataset<T> dataset)
+            : this()
+        {
+            Model = model;
+            Dataset = dataset;
+        }
+
         public EvalutationContext(IModel model, ISplitter<T> splitter)
+            : this()
         {
             Model = model;
             Splitter = splitter;
-            _items = new Dictionary<string, object>();
         }
 
         public void RunDefaultTrainAndTest()
@@ -54,7 +87,7 @@ namespace WrapRec.Evaluation
                     if (!predictor.IsTrained)
                         predictor.Train(Splitter.Train);
 
-                    Console.WriteLine("Testing on test set...");
+                    Log.Logger.Trace("Testing on test set...");
 
                     foreach (var sample in Splitter.Test)
                     {
@@ -67,7 +100,7 @@ namespace WrapRec.Evaluation
                     if (!predictor.IsTrained)
                         predictor.Train(Dataset.TrainSamples);
 
-                    Console.WriteLine("Testing on test set...");
+                    Log.Logger.Trace("Testing on test set...");
 
                     foreach (var sample in Dataset.TestSamples)
                     {
