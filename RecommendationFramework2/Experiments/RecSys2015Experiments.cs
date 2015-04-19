@@ -9,12 +9,13 @@ using WrapRec.Evaluation;
 using WrapRec.Readers.NewReaders;
 using WrapRec.Recommenders;
 using WrapRec.Utilities;
+using WrapRec.RecSys2015;
 
 namespace WrapRec.Experiments
 {
     public class RecSys2015Experiments
     {
-        public void Run(int testNum = 5)
+        public void Run(int testNum = 6)
         {
             switch (testNum)
             {
@@ -32,6 +33,9 @@ namespace WrapRec.Experiments
                     break;
                 case(5):
                     TestWholeDatasetAmazon();
+                    break;
+                case(6):
+                    TestAmazonSingle();
                     break;
                 default:
                     break;
@@ -61,8 +65,8 @@ namespace WrapRec.Experiments
 
             //var recommender = new MediaLiteRatingPredictor(new MatrixFactorization());
             var recommender = new LibFmTrainTester(libFmPath: "LibFm.Net.64.exe") { CreateBinaryFiles = true };
-            //recommender.Blocks.Add(new UsersBlock());
-            //recommender.Blocks.Add(new ItemsBlock());
+            recommender.Blocks.Add(new UsersBlock());
+            recommender.Blocks.Add(new ItemsBlock());
 
             // evaluation
             var ctx = new EvalutationContext<ItemRating>(recommender, splitter);
@@ -72,7 +76,41 @@ namespace WrapRec.Experiments
 
             var duration = (int)DateTime.Now.Subtract(startTime).TotalMilliseconds;
 
-            Console.WriteLine("RMSE\tDuration\n{0}\t{1}", ctx["RMSE"], duration);
+            Console.WriteLine("RMSE\tDuration\n{0}\t{1}", ctx["RMSE"], recommender.Duration);
+        }
+
+        public void TestAmazonSingle()
+        {
+            // step 1: dataset            
+            var config = new CsvConfiguration()
+            {
+                Delimiter = ",",
+                HasHeaderRecord = true
+            };
+
+            // load data
+            var trainReader = new CsvReader(AmazonAdapter.GetPath("book", Split.Train, 0.75), config);
+            var testReader = new CsvReader(AmazonAdapter.GetPath("book", Split.Test, 0.25), config, true);
+
+            var container = new DataContainer();
+            trainReader.LoadData(container);
+            testReader.LoadData(container);
+
+
+            var splitter = new RatingSimpleSplitter(container);
+
+            //var recommender = new MediaLiteRatingPredictor(new MatrixFactorization());
+            var recommender = new LibFmTrainTester(libFmPath: "LibFm.Net.64.exe") { CreateBinaryFiles = true };
+            //recommender.Blocks.Add(new UsersBlock());
+            //recommender.Blocks.Add(new ItemsBlock());
+
+            // evaluation
+            var ctx = new EvalutationContext<ItemRating>(recommender, splitter);
+            var ep = new EvaluationPipeline<ItemRating>(ctx);
+            ep.Evaluators.Add(new RMSE());
+            ep.Run();
+
+            Console.WriteLine("RMSE\tDuration\n{0}\t{1}", ctx["RMSE"], recommender.Duration);
         }
 
         public void TestMovieLensCrossDomainBlock()
@@ -341,7 +379,7 @@ namespace WrapRec.Experiments
             var dvdDomain = new Domain("dvd");
             var videoDomain = new Domain("video");
 
-            var bookReader = new CsvReader("books_selected4.csv", config, bookDomain);
+            var bookReader = new CsvReader(Paths.AmazonAllBookRatings, config, bookDomain);
             var musicReader = new CsvReader(Paths.AmazonAllMusicRatings, config, musicDomain);
             var dvdReader = new CsvReader(Paths.AmazonAllDvdRatings, config, dvdDomain);
             var videoReader = new CsvReader(Paths.AmazonAllVideoRatings, config, videoDomain);

@@ -19,16 +19,17 @@ namespace WrapRec.RecSys2015
         public int NoTrain { get; set; }
         public int NoTest { get; set; }
         public string Name { get; set; }
+        public int NumAuxRatings { get; set; }
         public LibFmTrainTester LibFmTrainTester { get; set; }
 
         public override string ToString()
         {
-            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}", Name, LowestRMSE, FinalRMSE, FinalMAE, Duration, NoTrain, NoTest, LibFmTrainTester.ToString());
+            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}", Name, LowestRMSE, FinalRMSE, FinalMAE, Duration, NoTrain, NoTest, NumAuxRatings, LibFmTrainTester.ToString());
         }
 
         public static string GetToStringHeader()
         {
-            return "Name\tLowestRMSE\tFinalRMSE\tFinalMAE\tDuration\tNoTrain\tNoTest\t" + LibFmTrainTester.GetToStringHeader();
+            return "Name\tLowestRMSE\tFinalRMSE\tFinalMAE\tDuration\tNoTrain\tNoTest\tNumAuxRatings\t" + LibFmTrainTester.GetToStringHeader();
         }
 
     }

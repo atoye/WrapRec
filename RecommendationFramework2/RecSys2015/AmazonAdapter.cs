@@ -11,17 +11,22 @@ namespace WrapRec.RecSys2015
 {
     public enum Split { Train, Test, All }
 
-    public class AmazonAdapter
+    public class AmazonAdapter : Adapter
     {
         static double _trainRatio = 0.75;
         static double _testRatio = 0.25;
-        
+
+        // 1: Amazon Dense dataset (Same dataset as the paper "Personalized recommendation via cross-domain triadic factorization")
+        // 4: Users have at least one rating in each domain
+        static int _datasetType = 4;    
+
         public static string GetPath(string domainId, Split split, double ratio = -1)
         {
             // The datasets ending with selected4 are the ones containing users who has at least 
             // one rating in all domains (see JournalExperiments.cs)
-            return string.Format(@"D:\Data\Datasets\Amazon\RecSys2015\{0}_selected4{1}{2}.csv",
+            return string.Format(@"D:\Data\Datasets\Amazon\RecSys2015\{0}_selected{1}{2}{3}.csv",
                 domainId,
+                _datasetType,
                 split == Split.All ? "" : "_" + split.ToString().ToLower(),
                 ratio == -1 ? "" : (ratio * 100).ToString());
 
@@ -91,17 +96,19 @@ namespace WrapRec.RecSys2015
             return new CsvReader(path, config, domain, (split == Split.Test));
         }
 
-        public Dictionary<string, ISplitter<ItemRating>> GetSimpleSplitters()
+        public override Dictionary<string, ISplitter<ItemRating>> GetSplitters()
         {
             var splitters = new Dictionary<string, ISplitter<ItemRating>>();
 
             foreach (var ad in AmazonDomains)
             {
-                splitters.Add(ad.Id, new AmazonSimpleSplitter(Container, ad));
+                splitters.Add(ad.Id, new CrossDomainSimpleSplitter(Container, ad));
             }
 
             return splitters;
         }
+
+        
 
     }
 }

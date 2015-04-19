@@ -33,8 +33,9 @@ namespace WrapRec
             //(new TrustExperiments2()).Run();
             //(new RecSys2015Experiments()).Run();
             //AmazonContainer.PrepareDatasets();
-            //(new RecSys2015.Experiments("log.txt")).Run();
-            ResultAnalyzer.Run();
+            //EpinionsAdapter.SplitDataset();
+            (new RecSys2015.Experiments("log.txt")).Run();
+            //ResultAnalyzer.Run();
 
             Console.WriteLine("Finished!.");
 

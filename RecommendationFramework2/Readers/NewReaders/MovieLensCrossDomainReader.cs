@@ -38,8 +38,8 @@ namespace WrapRec.Readers.NewReaders
             }
 
             Console.WriteLine("Creating domains...");
-            //mlContainer.CreateItemClusters(MoviesPath.GetDirectoryPath() + "\\GenreClusters.csv");
-            mlContainer.CreateDominantGenre(MoviesPath.GetDirectoryPath() + "\\DominantGenre.csv");
+            mlContainer.CreateItemClusters(MoviesPath.GetDirectoryPath() + "\\GenreClusters.csv");
+            //mlContainer.CreateDominantGenre(MoviesPath.GetDirectoryPath() + "\\DominantGenre.csv");
             
             Console.WriteLine("Reading ratings...");
             foreach (string l in File.ReadAllLines(RatingsPath).Skip(1))

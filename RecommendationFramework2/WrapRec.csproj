@@ -179,9 +179,7 @@
     <Compile Include="Evaluation\ItemRankingEvaluationContext.cs" />
     <Compile Include="Evaluation\NDCG.cs" />
     <Compile Include="Evaluation\RMSE.cs" />
-    <Compile Include="Experiments\AmazonTester.cs" />
     <Compile Include="Experiments\Ectel2014Experiments.cs" />
-    <Compile Include="Experiments\MovieLensTester.cs" />
     <Compile Include="IDataFilter.cs" />
     <Compile Include="IDataset.cs" />
     <Compile Include="IDatasetReader.cs" />
@@ -219,12 +217,14 @@
     <Compile Include="Recommenders\LibSvmClassifier.cs" />
     <Compile Include="Recommenders\MediaLiteItemRecommender.cs" />
     <Compile Include="Recommenders\MediaLiteRatingPredictor.cs" />
+    <Compile Include="RecSys2015\Adapter.cs" />
     <Compile Include="RecSys2015\AmazonAdapter.cs" />
     <Compile Include="RecSys2015\AmazonDataContainer.cs" />
     <Compile Include="RecSys2015\AmazonReader.cs" />
-    <Compile Include="RecSys2015\AmazonSplitter.cs" />
+    <Compile Include="RecSys2015\EpinionsAdapter.cs" />
     <Compile Include="RecSys2015\Experiments.cs" />
     <Compile Include="RecSys2015\LibFmTrainTesterBuilder.cs" />
+    <Compile Include="RecSys2015\MovieLensAdapter.cs" />
     <Compile Include="RecSys2015\ResultAnalyzer.cs" />
     <Compile Include="RecSys2015\TestConfig.cs" />
     <Compile Include="Relation.cs" />

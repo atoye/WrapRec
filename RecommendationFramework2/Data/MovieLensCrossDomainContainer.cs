@@ -24,7 +24,7 @@ namespace WrapRec.Data
             _mapper = new Mapping();
             NumDomains = numDomains;
             RandomClusters = randomClusters;
-            _itemsCluster = new Dictionary<string, int>();
+            _itemsCluster = new Dictionary<string, int>(); 
 
             for (int i = 0; i < numDomains; i++)
             { 
@@ -33,6 +33,9 @@ namespace WrapRec.Data
             }
         }
 
+        /// <summary>
+        /// Create clusters based on the given number of domains
+        /// </summary>
         public void CreateItemClusters()
         { 
             // this is equal to the number of possible genres (in the MovieLens 1M dataset that is 18)
@@ -59,6 +62,11 @@ namespace WrapRec.Data
             _itemsCluster = Clusterer.Cluster(itemIds, genreFeatures, NumDomains);
         }
 
+        /// <summary>
+        /// Create clusters based on a saved cluster file 
+        /// The clusters are made with Matlab
+        /// </summary>
+        /// <param name="clusterPath"></param>
         public void CreateItemClusters(string clusterPath)
         {
             if (NumDomains <= 1)

@@ -10,6 +10,15 @@ namespace WrapRec.Data
 {
     public class CrossDomainSimpleSplitter : ISplitter<ItemRating>
     {
+        public Domain TargetDomain { get; set; }
+
+        public CrossDomainSimpleSplitter(CrossDomainDataContainer container, Domain targetDomain)
+        {
+            TargetDomain = targetDomain;
+            Train = container.Ratings.Where(r => r.IsTest == false && r.Domain.Id == targetDomain.Id);
+            Test = container.Ratings.Where(r => r.IsTest == true && r.Domain.Id == targetDomain.Id);
+        }
+
         public CrossDomainSimpleSplitter(CrossDomainDataContainer container)
         {
             Train = container.Ratings.Where(r => r.IsTest == false && r.Domain.IsTarget == true);
