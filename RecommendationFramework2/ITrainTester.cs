@@ -8,6 +8,6 @@ namespace WrapRec
 {
     public interface ITrainTester<T> : IModel
     {
-        void TrainAndTest(IEnumerable<T> trainSet, IEnumerable<T> testSet);
+        void TrainAndTest(IEnumerable<T> trainSet, IEnumerable<T> testSet, IEnumerable<T> validSet);
     }
 }

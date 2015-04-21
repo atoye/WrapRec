@@ -58,11 +58,12 @@ namespace WrapRec.RecSys2015
         }
 
         public AmazonDataContainer Container { get; set; }
-        public ISplitter<ItemRating> Splitter { get; set; }
-
-        public AmazonAdapter()
+        public bool IncludeValidation { get; set; }
+        
+        public AmazonAdapter(bool includeValidation = false)
         {
             Container = new AmazonDataContainer();
+            IncludeValidation = includeValidation;
 
             var splits = new List<Split>() { Split.Train, Split.Test };
 
@@ -102,7 +103,7 @@ namespace WrapRec.RecSys2015
 
             foreach (var ad in AmazonDomains)
             {
-                splitters.Add(ad.Id, new CrossDomainSimpleSplitter(Container, ad));
+                splitters.Add(ad.Id, new CrossDomainSimpleSplitter(Container, ad, IncludeValidation));
             }
 
             return splitters;

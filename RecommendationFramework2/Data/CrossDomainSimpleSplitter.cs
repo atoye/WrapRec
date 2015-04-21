@@ -11,11 +11,24 @@ namespace WrapRec.Data
     public class CrossDomainSimpleSplitter : ISplitter<ItemRating>
     {
         public Domain TargetDomain { get; set; }
+        
+        double _validationRatio = 0.1;
 
-        public CrossDomainSimpleSplitter(CrossDomainDataContainer container, Domain targetDomain)
+        public CrossDomainSimpleSplitter(CrossDomainDataContainer container, Domain targetDomain, bool includeValidation = false)
         {
             TargetDomain = targetDomain;
-            Train = container.Ratings.Where(r => r.IsTest == false && r.Domain.Id == targetDomain.Id);
+
+            var temp = container.Ratings.Where(r => r.IsTest == false && r.Domain.Id == targetDomain.Id);
+            if (includeValidation)
+            {
+                int trainCount = Convert.ToInt32(temp.Count() * (1 - _validationRatio));
+                Train = temp.Take(trainCount);
+                Validation = temp.Skip(trainCount);
+            }
+            else
+            {
+                Train = temp;
+            }
             Test = container.Ratings.Where(r => r.IsTest == true && r.Domain.Id == targetDomain.Id);
         }
 
@@ -23,6 +36,16 @@ namespace WrapRec.Data
         {
             Train = container.Ratings.Where(r => r.IsTest == false && r.Domain.IsTarget == true);
             Test = container.Ratings.Where(r => r.IsTest == true && r.Domain.IsTarget == true);
+        }
+
+        public CrossDomainSimpleSplitter(CrossDomainDataContainer container, Domain targeDomain, float testPortion)
+        {
+            TargetDomain = targeDomain;
+            var targetRatings = container.Ratings.Where(r => r.Domain.Id == targeDomain.Id).Shuffle();
+            int trainCount = (int)Math.Round(targetRatings.Count() * (1 - testPortion));
+
+            Train = targetRatings.Take(trainCount); //.Concat(container.Ratings.Where(r => r.Domain.IsTarget == false));
+            Test = targetRatings.Skip(trainCount);
         }
 
         public CrossDomainSimpleSplitter(CrossDomainDataContainer container, float testPortion)
@@ -44,5 +67,7 @@ namespace WrapRec.Data
         public IEnumerable<ItemRating> Train { get; private set; }
 
         public IEnumerable<ItemRating> Test { get; private set; }
+
+        public IEnumerable<ItemRating> Validation { get; private set; }
     }
 }

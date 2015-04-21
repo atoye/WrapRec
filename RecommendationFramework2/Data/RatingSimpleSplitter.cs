@@ -33,6 +33,7 @@ namespace WrapRec.Data
         public IEnumerable<ItemRating> Train { get; private set; }
 
         public IEnumerable<ItemRating> Test { get; private set; }
-        
+
+        public IEnumerable<ItemRating> Validation { get; private set; }
     }
 }

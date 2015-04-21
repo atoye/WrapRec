@@ -54,7 +54,7 @@ namespace WrapRec.Recommenders
             Regularization = regularization;
         }
 
-        public void TrainAndTest(IEnumerable<PositiveFeedback> trainSet, IEnumerable<PositiveFeedback> testSet)
+        public void TrainAndTest(IEnumerable<PositiveFeedback> trainSet, IEnumerable<PositiveFeedback> testSet, IEnumerable<PositiveFeedback> validSet)
         {
             string trainPath = _dataStorePath + "train.libfm";
             string testPath = _dataStorePath + "test.libfm";

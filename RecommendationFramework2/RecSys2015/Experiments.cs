@@ -13,7 +13,7 @@ namespace WrapRec.RecSys2015
     public class Experiments
     {
         StreamWriter resultWriter;
-        //int[] _numAuxRatings = new int[] { 1, 2, 3, 5, 7, 10 };
+        //int[] _numAuxRatings = new int[] { 1, 2 };
         int[] _numAuxRatings = new int[] { 0 };
 
         public Experiments(string outputPath)
@@ -34,9 +34,15 @@ namespace WrapRec.RecSys2015
                 case(2):
                     CompareAmazonCrossDomains();
                     break;
+                case(3):
+                    MovieLensSliceAndTrain();
+                    break;
                 default:
                     break;
             }
+            
+            // close the file
+            resultWriter.Close();
         }
 
         public void CompareAmazonCrossDomains()
@@ -44,15 +50,27 @@ namespace WrapRec.RecSys2015
             var adapter = new AmazonAdapter();
             var splitters = adapter.GetSplitters();
 
-            ExecuteExperiments(new LibFmTrainTesterBuilder(true, true), splitters);
+            ExecuteExperiments(new LibFmTrainTesterBuilder(false, true), splitters);
         }
 
         public void CompareAmazonSingleDomains()
         {
-            var adapter = new AmazonAdapter();
+            var adapter = new AmazonAdapter(true);
             var splitters = adapter.GetSplitters();
 
             ExecuteExperiments(new LibFmTrainTesterBuilder(false, false), splitters);
+        }
+
+        public void MovieLensSliceAndTrain()
+        {
+            int[] numSlices = new int[] { 2, 3, 4, 5, 6, 8, 10 };
+
+            foreach (int num in numSlices)
+            {
+                var adapter = new MovieLensCrossDomainAdapter(num);
+                ExecuteExperiments(new LibFmTrainTesterBuilder(false, true), adapter.GetSplitters(), num);
+            }
+            
         }
         
         /// <summary>
@@ -60,7 +78,7 @@ namespace WrapRec.RecSys2015
         /// </summary>
         /// <param name="libFmBuilder">Provide configurations of libFM</param>
         /// <param name="splitters">Provides configurations of splits</param>
-        public void ExecuteExperiments(LibFmTrainTesterBuilder libFmBuilder, Dictionary<string, ISplitter<ItemRating>> splitters)
+        public void ExecuteExperiments(LibFmTrainTesterBuilder libFmBuilder, Dictionary<string, ISplitter<ItemRating>> splitters, int numSlice = 1)
         {
             // prepare evaluation 
             var ctx = new EvalutationContext<ItemRating>();
@@ -106,6 +124,7 @@ namespace WrapRec.RecSys2015
                             NoTrain = splitter.Value.Train.Count(),
                             NoTest = splitter.Value.Test.Count(),
                             NumAuxRatings = libFmBuilder.CrossDomain ? numAux : 0,
+                            NumSlices = numSlice,
                             LibFmTrainTester = recommender
                         };
 
@@ -125,7 +144,7 @@ namespace WrapRec.RecSys2015
             Console.WriteLine(TestConfig.GetToStringHeader());
             configs.Select(c => c.ToString()).ToList().ForEach(Console.WriteLine);
             
-            resultWriter.Close();
+            
         }
 
 

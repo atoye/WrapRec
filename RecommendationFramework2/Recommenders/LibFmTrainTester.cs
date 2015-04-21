@@ -8,6 +8,7 @@ using System.IO;
 using System.Diagnostics;
 using LinqLib.Sequence;
 using WrapRec.Data;
+using WrapRec.Utilities;
 
 namespace WrapRec.Recommenders
 {
@@ -27,6 +28,7 @@ namespace WrapRec.Recommenders
         public FmLearnigAlgorithm LearningAlgorithm { get; set; }
         public string TrainFile { get; set; }
         public string TestFile { get; set; }
+        public string ValidationFile { get; set; }
         public bool CreateBinaryFiles { get; set; }
         public List<LibFmBlock> Blocks { get; private set; }
         public double RMSE { get; private set; }
@@ -68,7 +70,7 @@ namespace WrapRec.Recommenders
             CreateBinaryFiles = false;
         }
 
-        public void TrainAndTest(IEnumerable<ItemRating> trainSet, IEnumerable<ItemRating> testSet)
+        public void TrainAndTest(IEnumerable<ItemRating> trainSet, IEnumerable<ItemRating> testSet, IEnumerable<ItemRating> validSet = null)
         {
             string expIdExtension = string.IsNullOrEmpty(_experimentId) ? "" : "." + _experimentId;
 
@@ -76,6 +78,7 @@ namespace WrapRec.Recommenders
             {
                 TrainFile = _dataStorePath + "train.libfm" + expIdExtension;
                 TestFile = _dataStorePath + "test.libfm" + expIdExtension;
+                ValidationFile = _dataStorePath + "eval.libfm" + expIdExtension;
             }
 
             string testOutput = _dataStorePath + "test.out" + expIdExtension;
@@ -83,6 +86,9 @@ namespace WrapRec.Recommenders
             // converting train and test data to libFm files becuase libfm.exe only get file names as input
             SaveLibFmFile(trainSet, TrainFile, true);
             SaveLibFmFile(testSet, TestFile, false);
+
+            if (validSet != null)
+                SaveLibFmFile(validSet, ValidationFile, true);
 
             if (CreateBinaryFiles)
             {
@@ -210,9 +216,17 @@ namespace WrapRec.Recommenders
             }
 
             File.WriteAllLines(libfmFile, featVectors);
+
+            //if (LearningAlgorithm == FmLearnigAlgorithm.SGDA && isTrain)
+            //{
+            //    CreateValidationSet(libfmFile, 0.2);
+            //}
         }
 
-        
+        public void CreateValidationSet(string trainFile, double ratio)
+        {
+            FileHelper.SplitLines(trainFile, trainFile, trainFile + ".val", ratio, false, true);
+        }
 
         public void ConvertAndTransform(string libfmFile)
         {
@@ -258,6 +272,8 @@ namespace WrapRec.Recommenders
 
         private string BuildArguments(string trainFile, string testFile, string testOutput)
         {
+            string trainFileOrg = trainFile;
+
             if (CreateBinaryFiles)
             {
                 trainFile += ".bin";
@@ -270,8 +286,9 @@ namespace WrapRec.Recommenders
                 blockParams = " -relation " + Blocks.Select(b => b.Name + ".bin").Aggregate((a, b) => a + "," + b);
             }
 
-            return String.Format("-task r -train {0} -test {1} -method {2} -iter {3} -dim {4} -learn_rate {5} -out {6} -regular {7}{8}",
-                trainFile, testFile, LearningAlgorithm.ToString().ToLower(), Iterations, Dimensions, LearningRate, testOutput, Regularization, blockParams);
+            return String.Format("-task r -train {0} -test {1} -method {2} -iter {3} -dim {4} -learn_rate {5} -out {6} -regular {7}{8}{9}",
+                trainFile, testFile, LearningAlgorithm.ToString().ToLower(), Iterations, Dimensions, LearningRate, testOutput, Regularization, blockParams,
+                LearningAlgorithm == FmLearnigAlgorithm.SGDA ? " -validation " + ValidationFile : "");
         }
 
         private void UpdateTestSet(IEnumerable<ItemRating> testSet, string testOutput)
@@ -295,19 +312,20 @@ namespace WrapRec.Recommenders
         public override string ToString()
         {
             // LearningMethod Dimensionality NumIteration LearningRate NoBlocks BinaryInput
-            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
+            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}",
                 LearningAlgorithm.ToString(),
                 Dimensions,
                 Iterations,
                 LowestIteration + 1,
                 LearningRate,
+                Regularization,
                 Blocks.Count,
                 CreateBinaryFiles ? "yes" : "no");
         }
 
         public static string GetToStringHeader()
         {
-            return "LearningMethod\tDimensionality\tNumIteration\tLowestIteration\tLearningRate\tNoBlocks\tBinaryInput";
+            return "LearningMethod\tDimensionality\tNumIteration\tLowestIteration\tLearningRate\tRegularization\tNoBlocks\tBinaryInput";
         }
     }
 

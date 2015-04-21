@@ -225,6 +225,7 @@
     <Compile Include="RecSys2015\Experiments.cs" />
     <Compile Include="RecSys2015\LibFmTrainTesterBuilder.cs" />
     <Compile Include="RecSys2015\MovieLensAdapter.cs" />
+    <Compile Include="RecSys2015\MovieLensCrossDomainAdapter.cs" />
     <Compile Include="RecSys2015\ResultAnalyzer.cs" />
     <Compile Include="RecSys2015\TestConfig.cs" />
     <Compile Include="Relation.cs" />

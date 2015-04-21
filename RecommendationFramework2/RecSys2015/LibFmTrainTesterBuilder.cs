@@ -12,16 +12,19 @@ namespace WrapRec.RecSys2015
     {
         FmLearnigAlgorithm[] _learningAlgs = new FmLearnigAlgorithm[] 
         { 
-            //FmLearnigAlgorithm.SGD,
+            FmLearnigAlgorithm.SGD,
+            FmLearnigAlgorithm.SGDA,
             FmLearnigAlgorithm.ALS,
             FmLearnigAlgorithm.MCMC
         };
 
         int[] _iterations = new int[] { 50 };
 
-        double[] _learningRates = new double[] { 0.01, 0.02 };
+        double[] _learningRates = new double[] { 0.005 };
         
-        string[] _dimenstions = new string[] { "1,1,5", "1,1,10" };
+        string[] _dimenstions = new string[] { "1,1,5" };
+
+        string[] _regulars = new string[] { "0,0,0" };
 
         public List<LibFmTrainTester> LibFms { get; private set; }
 
@@ -29,10 +32,6 @@ namespace WrapRec.RecSys2015
         public bool CrossDomain { get; set; }
 
         /// <summary>
-        /// In the default constructor, the features are build by standard LibFMFeatureBuilder
-        /// A custom featureBuilder can be passed for advanced feature construction (such as CrossDomainFeatureBuilder)
-        /// By default the BlockStructure is not being used. If the blocks are added the features are then build by the 
-        /// blocks and the FeatureBuilders are not used anymore
         /// Note that for SGD the features are always build by featureBuilders as they don't support block structure
         /// </summary>
         public LibFmTrainTesterBuilder(bool useBlocks, bool crossDomain)
@@ -54,10 +53,13 @@ namespace WrapRec.RecSys2015
                     {
                         foreach (var dim in _dimenstions)
                         {
-                            var libfm = new LibFmTrainTester(alg: la, numIterations: iter, learningRate: lr, dimensions: dim) 
-                            { CreateBinaryFiles = true };
+                            foreach (var reg in _regulars)
+                            {
+                                var libfm = new LibFmTrainTester(alg: la, numIterations: iter, learningRate: lr, dimensions: dim, regularization: reg) 
+                                { CreateBinaryFiles = true };
 
-                            LibFms.Add(libfm);
+                                LibFms.Add(libfm);
+                            }
                         }
                     }
                 }
@@ -72,7 +74,7 @@ namespace WrapRec.RecSys2015
             {
                 targetDomain = ((CrossDomainSimpleSplitter)splitter).TargetDomain;
 
-                if (UseBlocks && recommender.LearningAlgorithm != FmLearnigAlgorithm.SGD)
+                if (UseBlocks && recommender.LearningAlgorithm != FmLearnigAlgorithm.SGD && recommender.LearningAlgorithm != FmLearnigAlgorithm.SGDA)
                 {
                     recommender.Blocks.Clear();
                     recommender.Blocks.Add(new ItemsBlock());
@@ -85,7 +87,7 @@ namespace WrapRec.RecSys2015
             }
             else
             {
-                if (UseBlocks && recommender.LearningAlgorithm != FmLearnigAlgorithm.SGD)
+                if (UseBlocks && recommender.LearningAlgorithm != FmLearnigAlgorithm.SGD && recommender.LearningAlgorithm != FmLearnigAlgorithm.SGDA)
                 {
                     recommender.Blocks.Clear();
                     recommender.Blocks.Add(new ItemsBlock());

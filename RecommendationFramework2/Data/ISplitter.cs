@@ -9,7 +9,7 @@ namespace WrapRec.Data
     public interface ISplitter<T>
     {
         IEnumerable<T> Train { get; }
-
         IEnumerable<T> Test { get; }
+        IEnumerable<T> Validation { get; }
     }
 }

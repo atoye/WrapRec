@@ -27,5 +27,7 @@ namespace WrapRec.Data
         public IEnumerable<PositiveFeedback> Train { get; private set; }
 
         public IEnumerable<PositiveFeedback> Test { get; private set; }
+
+        public IEnumerable<PositiveFeedback> Validation { get; private set; }
     }
 }

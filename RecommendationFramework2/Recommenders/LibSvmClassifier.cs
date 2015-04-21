@@ -23,7 +23,7 @@ namespace WrapRec.Recommenders
             LabelSelector = labelSelector;
         }
 
-        public void TrainAndTest(IEnumerable<ItemRating> trainSet, IEnumerable<ItemRating> testSet)
+        public void TrainAndTest(IEnumerable<ItemRating> trainSet, IEnumerable<ItemRating> testSet, IEnumerable<ItemRating> validSet)
         {
             var problem = new SvmProblem()
             {
