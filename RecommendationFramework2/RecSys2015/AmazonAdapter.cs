@@ -58,12 +58,13 @@ namespace WrapRec.RecSys2015
         }
 
         public AmazonDataContainer Container { get; set; }
-        public bool IncludeValidation { get; set; }
-        
-        public AmazonAdapter(bool includeValidation = false)
+        public bool WholeSplit { get; set; }
+
+        public AmazonAdapter(bool includeValidation = false, bool wholeSplit = false)
         {
             Container = new AmazonDataContainer();
             IncludeValidation = includeValidation;
+            WholeSplit = wholeSplit;
 
             var splits = new List<Split>() { Split.Train, Split.Test };
 
@@ -101,9 +102,16 @@ namespace WrapRec.RecSys2015
         {
             var splitters = new Dictionary<string, ISplitter<ItemRating>>();
 
-            foreach (var ad in AmazonDomains)
+            if (!WholeSplit)
             {
-                splitters.Add(ad.Id, new CrossDomainSimpleSplitter(Container, ad, IncludeValidation));
+                foreach (var ad in AmazonDomains)
+                {
+                    splitters.Add(ad.Id, new CrossDomainSimpleSplitter(Container, ad, IncludeValidation));
+                }
+            }
+            else
+            {
+                splitters.Add("Amazon", new RatingSimpleSplitter(Container, IncludeValidation));
             }
 
             return splitters;

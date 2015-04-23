@@ -88,7 +88,7 @@ namespace WrapRec.Recommenders
             SaveLibFmFile(testSet, TestFile, false);
 
             if (validSet != null)
-                SaveLibFmFile(validSet, ValidationFile, true);
+                SaveLibFmFile(validSet, ValidationFile, true, true);
 
             if (CreateBinaryFiles)
             {
@@ -173,11 +173,11 @@ namespace WrapRec.Recommenders
         public int LowestIteration { get; set; }
         public string LibFmArgs { get; set; }
 
-        private void SaveLibFmFile(IEnumerable<ItemRating> dataset, string libfmFile, bool isTrain)
+        private void SaveLibFmFile(IEnumerable<ItemRating> dataset, string libfmFile, bool isTrain, bool isValid = false)
         {
             List<string> featVectors;
 
-            if (Blocks.Count > 0)
+            if (Blocks.Count > 0 && !isValid)
             {
                 List<string>[] blockIndices = new List<string>[Blocks.Count];
                 for (int i = 0; i < Blocks.Count; i++)
@@ -216,16 +216,6 @@ namespace WrapRec.Recommenders
             }
 
             File.WriteAllLines(libfmFile, featVectors);
-
-            //if (LearningAlgorithm == FmLearnigAlgorithm.SGDA && isTrain)
-            //{
-            //    CreateValidationSet(libfmFile, 0.2);
-            //}
-        }
-
-        public void CreateValidationSet(string trainFile, double ratio)
-        {
-            FileHelper.SplitLines(trainFile, trainFile, trainFile + ".val", ratio, false, true);
         }
 
         public void ConvertAndTransform(string libfmFile)

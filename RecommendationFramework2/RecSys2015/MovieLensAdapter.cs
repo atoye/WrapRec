@@ -14,9 +14,11 @@ namespace WrapRec.RecSys2015
     {
         public DataContainer Container { get; private set; }
 
-        public MovieLensAdapter()
+        public MovieLensAdapter(bool includeValidation = false)
         {
             Container = new DataContainer();
+            IncludeValidation = includeValidation;
+
             var splits = new List<Split>() { Split.Train, Split.Test };
 
             foreach (var split in splits)
@@ -27,14 +29,13 @@ namespace WrapRec.RecSys2015
             }
 
             Log.Logger.Info(Container.ToString());
-
         }
 
         public override Dictionary<string, ISplitter<ItemRating>> GetSplitters()
         {
             var splitters = new Dictionary<string, ISplitter<ItemRating>>();
 
-            splitters.Add("MovieLens", new RatingSimpleSplitter(Container));
+            splitters.Add("MovieLens", new RatingSimpleSplitter(Container, IncludeValidation));
 
             return splitters;
         }

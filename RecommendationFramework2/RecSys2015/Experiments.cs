@@ -21,7 +21,7 @@ namespace WrapRec.RecSys2015
             resultWriter = new StreamWriter(new FileStream(outputPath, FileMode.Create));
         }
         
-        public void Run(int num = 1)
+        public void Run(int num = 6)
         {
             switch (num)
             {
@@ -29,13 +29,28 @@ namespace WrapRec.RecSys2015
                     if (_numAuxRatings.Count() > 1)
                         throw new WrapRecException("NumAuxRatings array should have only one element!");
 
-                    CompareAmazonSingleDomains();
+                    AmazonSingleDomains();
                     break;
                 case(2):
-                    CompareAmazonCrossDomains();
+                    AmazonCrossDomains();
                     break;
                 case(3):
                     MovieLensSliceAndTrain();
+                    break;
+                case(4):
+                    MovieLensSingle();
+                    break;
+                case(5):
+                    MovieLensContextAware();
+                    break;
+                case(6):
+                    AmazonContextAware();
+                    break;
+                case(7):
+                    MovieLensIndependentContextAwareSlices();
+                    break;
+                case(8):
+                    MovieLensAllUserItemsContext();
                     break;
                 default:
                     break;
@@ -45,15 +60,48 @@ namespace WrapRec.RecSys2015
             resultWriter.Close();
         }
 
-        public void CompareAmazonCrossDomains()
+        public void MovieLensContextAware()
         {
-            var adapter = new AmazonAdapter();
+            var adapter = new MovieLensContextAwareAdapter(true);
+            var builder = new LibFmTrainTesterBuilder(true, false);
+            builder.ContextSelectors.Add(ir => ir.Item.Properties["genres"]);
+
+            ExecuteExperiments(builder, adapter.GetSplitters());
+        }
+
+        public void MovieLensAllUserItemsContext()
+        {
+            var adapter = new MovieLensContextAwareAdapter(true);
+            var builder = new LibFmTrainTesterBuilder(false, false);
+            var userCandidateRatings = adapter.Container.Users.Values
+                .ToDictionary(u => u.Id, u => 
+                    u.Ratings.Select(r => r.Item.Id + "aux")
+                    .Take(5)
+                    .Aggregate((a, b) => a + "|" + b));
+            
+            builder.ContextSelectors.Add(ir => userCandidateRatings[ir.User.Id]);
+
+            ExecuteExperiments(builder, adapter.GetSplitters());
+        }
+
+        public void AmazonContextAware()
+        {
+            var adapter = new AmazonAdapter(true, true);
+            var builder = new LibFmTrainTesterBuilder(false, false);
+            //builder.ContextSelectors.Add(ir => ir.Domain.Id);
+
+            ExecuteExperiments(builder, adapter.GetSplitters());
+        }
+
+        public void AmazonCrossDomains()
+        {
+            var adapter = new AmazonAdapter(true);
             var splitters = adapter.GetSplitters();
 
             ExecuteExperiments(new LibFmTrainTesterBuilder(false, true), splitters);
         }
 
-        public void CompareAmazonSingleDomains()
+        public void AmazonSingleDomains()
         {
             var adapter = new AmazonAdapter(true);
             var splitters = adapter.GetSplitters();
@@ -61,16 +109,37 @@ namespace WrapRec.RecSys2015
             ExecuteExperiments(new LibFmTrainTesterBuilder(false, false), splitters);
         }
 
+        public void MovieLensSingle()
+        {
+            var adapter = new MovieLensAdapter(true);
+            var splitters = adapter.GetSplitters();
+
+            ExecuteExperiments(new LibFmTrainTesterBuilder(true, false), splitters);
+        }
+
         public void MovieLensSliceAndTrain()
         {
-            int[] numSlices = new int[] { 2, 3, 4, 5, 6, 8, 10 };
+            int[] numSlices = new int[] { 2, 3 };
 
             foreach (int num in numSlices)
             {
                 var adapter = new MovieLensCrossDomainAdapter(num);
                 ExecuteExperiments(new LibFmTrainTesterBuilder(false, true), adapter.GetSplitters(), num);
             }
-            
+        }
+
+        public void MovieLensIndependentContextAwareSlices()
+        {
+            int[] numSlices = new int[] { 2, 3 };
+
+            foreach (int num in numSlices)
+            {
+                var adapter = new MovieLensCrossDomainAdapter(num, true);
+                var builder = new LibFmTrainTesterBuilder(false, false);
+                //builder.ContextSelectors.Add(ir => ir.Item.Properties["genres"]);
+
+                ExecuteExperiments(builder, adapter.GetSplitters(), num);
+            }
         }
         
         /// <summary>

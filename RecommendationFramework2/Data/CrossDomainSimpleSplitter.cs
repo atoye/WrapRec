@@ -38,13 +38,25 @@ namespace WrapRec.Data
             Test = container.Ratings.Where(r => r.IsTest == true && r.Domain.IsTarget == true);
         }
 
-        public CrossDomainSimpleSplitter(CrossDomainDataContainer container, Domain targeDomain, float testPortion)
+        public CrossDomainSimpleSplitter(CrossDomainDataContainer container, Domain targeDomain, float testPortion, bool includeValidation = false)
         {
             TargetDomain = targeDomain;
             var targetRatings = container.Ratings.Where(r => r.Domain.Id == targeDomain.Id).Shuffle();
             int trainCount = (int)Math.Round(targetRatings.Count() * (1 - testPortion));
+            
+            if (includeValidation)
+            {
+                int realTrainCount = Convert.ToInt32(trainCount * (1 - _validationRatio));
+                int validCount = trainCount - realTrainCount;
 
-            Train = targetRatings.Take(trainCount); //.Concat(container.Ratings.Where(r => r.Domain.IsTarget == false));
+                Train = targetRatings.Take(realTrainCount);
+                Validation = targetRatings.Skip(realTrainCount).Take(validCount);
+            }
+            else
+            {
+                Train = targetRatings.Take(trainCount);
+            }
+            
             Test = targetRatings.Skip(trainCount);
         }
 

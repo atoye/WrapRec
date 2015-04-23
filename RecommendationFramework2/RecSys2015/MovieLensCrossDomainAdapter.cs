@@ -15,8 +15,10 @@ namespace WrapRec.RecSys2015
 
         public MovieLensCrossDomainContainer Container { get; set; }
 
-        public MovieLensCrossDomainAdapter(int numDomains)
+        public MovieLensCrossDomainAdapter(int numDomains, bool includeValidation = false)
         {
+            IncludeValidation = includeValidation;
+
             var movieLensReader = new MovieLensCrossDomainReader(Paths.MovieLens1MMovies, Paths.MovieLens1M);
             Container = new MovieLensCrossDomainContainer(numDomains);
             movieLensReader.LoadData(Container);
@@ -30,7 +32,7 @@ namespace WrapRec.RecSys2015
 
             foreach (var d in Container.Domains.Values)
             {
-                splitters.Add(d.Id, new CrossDomainSimpleSplitter(Container, d, _testPortion));
+                splitters.Add(d.Id, new CrossDomainSimpleSplitter(Container, d, _testPortion, IncludeValidation));
             }
 
             return splitters;

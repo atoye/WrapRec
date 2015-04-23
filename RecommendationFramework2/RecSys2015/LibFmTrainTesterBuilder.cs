@@ -20,11 +20,13 @@ namespace WrapRec.RecSys2015
 
         int[] _iterations = new int[] { 50 };
 
-        double[] _learningRates = new double[] { 0.005 };
+        double[] _learningRates = new double[] { 0.002 };
         
         string[] _dimenstions = new string[] { "1,1,5" };
 
-        string[] _regulars = new string[] { "0,0,0" };
+        string[] _regulars = new string[] { "0.1,0.1,0.1" };
+
+        public List<Func<ItemRating, string>> ContextSelectors { get; private set; }
 
         public List<LibFmTrainTester> LibFms { get; private set; }
 
@@ -38,6 +40,7 @@ namespace WrapRec.RecSys2015
         {
             UseBlocks = useBlocks;
             CrossDomain = crossDomain;
+            ContextSelectors = new List<Func<ItemRating, string>>();
             CreateLibFms();
         }
 
@@ -92,12 +95,27 @@ namespace WrapRec.RecSys2015
                     recommender.Blocks.Clear();
                     recommender.Blocks.Add(new ItemsBlock());
                     recommender.Blocks.Add(new UsersBlock());
+
+                    if (ContextSelectors.Count > 0)
+                    {
+                        recommender.Blocks.Add(new ItemRatingContextBlock(ContextSelectors.ToArray()));
+                    }
                 }
                 else
                 {
-                    recommender.FeatureBuilder = new LibFmFeatureBuilder();
+                    recommender.FeatureBuilder = GetFeatureBuilder();
                 }
             }
+        }
+
+        private LibFmFeatureBuilder GetFeatureBuilder()
+        {
+            if (ContextSelectors.Count > 0)
+            {
+                return new ContextAwareLibFmFeatureBuilder(ContextSelectors.ToArray());
+            }
+            else
+                return new LibFmFeatureBuilder();
         }
 
 

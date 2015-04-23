@@ -9,13 +9,26 @@ namespace WrapRec.Data
 {
     public class RatingSimpleSplitter : ISplitter<ItemRating>
     {
+        double _validationRatio = 0.1;
+
         public DataContainer Container { get; set; }
 
         public float TestPortion { get; set; }
 
-        public RatingSimpleSplitter(DataContainer container)
+        public RatingSimpleSplitter(DataContainer container, bool includeValidation = false)
         {
-            Train = container.Ratings.Where(r => r.IsTest == false);
+            var temp = container.Ratings.Where(r => r.IsTest == false);
+            if (includeValidation)
+            {
+                int trainCount = Convert.ToInt32(temp.Count() * (1 - _validationRatio));
+                Train = temp.Take(trainCount);
+                Validation = temp.Skip(trainCount);
+            }
+            else
+            {
+                Train = temp;
+            }
+
             Test = container.Ratings.Where(r => r.IsTest == true);
         }
 
