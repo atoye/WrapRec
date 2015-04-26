@@ -276,7 +276,7 @@ namespace WrapRec.Recommenders
                 blockParams = " -relation " + Blocks.Select(b => b.Name + ".bin").Aggregate((a, b) => a + "," + b);
             }
 
-            return String.Format("-task r -train {0} -test {1} -method {2} -iter {3} -dim {4} -learn_rate {5} -out {6} -regular {7}{8}{9}",
+            return String.Format("-task r -train {0} -test {1} -method {2} -iter {3} -dim {4} -learn_rate {5} -out {6} -regular {7} -init_stdev 0.1{8}{9}",
                 trainFile, testFile, LearningAlgorithm.ToString().ToLower(), Iterations, Dimensions, LearningRate, testOutput, Regularization, blockParams,
                 LearningAlgorithm == FmLearnigAlgorithm.SGDA ? " -validation " + ValidationFile : "");
         }

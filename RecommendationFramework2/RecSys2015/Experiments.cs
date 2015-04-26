@@ -7,21 +7,22 @@ using WrapRec.Data;
 using WrapRec.Evaluation;
 using WrapRec.Recommenders;
 using System.IO;
+using MyMediaLite.RatingPrediction;
 
 namespace WrapRec.RecSys2015
 {
     public class Experiments
     {
         StreamWriter resultWriter;
-        //int[] _numAuxRatings = new int[] { 1, 2 };
-        int[] _numAuxRatings = new int[] { 0 };
+        int[] _numAuxRatings = new int[] { 2 };
+        //int[] _numAuxRatings = new int[] { 0 };
 
         public Experiments(string outputPath)
         {
             resultWriter = new StreamWriter(new FileStream(outputPath, FileMode.Create));
         }
         
-        public void Run(int num = 6)
+        public void Run(int num = 1)
         {
             switch (num)
             {
@@ -63,7 +64,7 @@ namespace WrapRec.RecSys2015
         public void MovieLensContextAware()
         {
             var adapter = new MovieLensContextAwareAdapter(true);
-            var builder = new LibFmTrainTesterBuilder(true, false);
+            var builder = new LibFmTrainTesterBuilder(false, false);
             builder.ContextSelectors.Add(ir => ir.Item.Properties["genres"]);
 
             ExecuteExperiments(builder, adapter.GetSplitters());
@@ -87,8 +88,8 @@ namespace WrapRec.RecSys2015
         public void AmazonContextAware()
         {
             var adapter = new AmazonAdapter(true, true);
-            var builder = new LibFmTrainTesterBuilder(false, false);
-            //builder.ContextSelectors.Add(ir => ir.Domain.Id);
+            var builder = new LibFmTrainTesterBuilder(true, false);
+            builder.ContextSelectors.Add(ir => ir.Domain.Id);
 
             ExecuteExperiments(builder, adapter.GetSplitters());
         }
@@ -103,10 +104,13 @@ namespace WrapRec.RecSys2015
 
         public void AmazonSingleDomains()
         {
-            var adapter = new AmazonAdapter(true);
+            var adapter = new AmazonAdapter(true, true);
             var splitters = adapter.GetSplitters();
+            var builder = new LibFmTrainTesterBuilder(false, false);
+            //builder.ContextSelectors.Add(ir => ir.Domain.Id);
 
-            ExecuteExperiments(new LibFmTrainTesterBuilder(false, false), splitters);
+            //ExecuteExperiments(builder, splitters);
+            ExecuteMfExperiments(splitters);
         }
 
         public void MovieLensSingle()
@@ -114,29 +118,30 @@ namespace WrapRec.RecSys2015
             var adapter = new MovieLensAdapter(true);
             var splitters = adapter.GetSplitters();
 
-            ExecuteExperiments(new LibFmTrainTesterBuilder(true, false), splitters);
+            //ExecuteExperiments(new LibFmTrainTesterBuilder(true, false), splitters);
+            ExecuteMfExperiments(splitters);
         }
 
         public void MovieLensSliceAndTrain()
         {
-            int[] numSlices = new int[] { 2, 3 };
+            int[] numSlices = new int[] { 3 };
 
             foreach (int num in numSlices)
             {
-                var adapter = new MovieLensCrossDomainAdapter(num);
+                var adapter = new MovieLensCrossDomainAdapter(num, true);
                 ExecuteExperiments(new LibFmTrainTesterBuilder(false, true), adapter.GetSplitters(), num);
             }
         }
 
         public void MovieLensIndependentContextAwareSlices()
         {
-            int[] numSlices = new int[] { 2, 3 };
+            int[] numSlices = new int[] { 2 };
 
             foreach (int num in numSlices)
             {
                 var adapter = new MovieLensCrossDomainAdapter(num, true);
                 var builder = new LibFmTrainTesterBuilder(false, false);
-                //builder.ContextSelectors.Add(ir => ir.Item.Properties["genres"]);
+                builder.ContextSelectors.Add(ir => ir.Item.Properties["genres"]);
 
                 ExecuteExperiments(builder, adapter.GetSplitters(), num);
             }
@@ -212,10 +217,68 @@ namespace WrapRec.RecSys2015
             // Write all results
             Console.WriteLine(TestConfig.GetToStringHeader());
             configs.Select(c => c.ToString()).ToList().ForEach(Console.WriteLine);
-            
-            
         }
 
+        public void ExecuteMfExperiments(Dictionary<string, ISplitter<ItemRating>> splitters)
+        {
+            // prepare evaluation 
+            var ctx = new EvalutationContext<ItemRating>();
+            var ep = new EvaluationPipeline<ItemRating>(ctx);
+            ep.Evaluators.Add(new RMSE());
+            ep.Evaluators.Add(new MAE());
 
+            // list to store test results
+            var configs = new List<TestConfig>();
+
+            resultWriter.WriteLine(TestConfig.GetToStringHeader());
+            resultWriter.Flush();
+
+            Log.Logger.Info(TestConfig.GetToStringHeader());
+
+            // iterate over all splits and all libfm configs
+            foreach (var splitter in splitters)
+            {
+                // update context splitter
+                ctx.Splitter = splitter.Value;
+
+
+                var mf = new MatrixFactorization() { NumIter = 50, LearnRate = 0.002f, NumFactors = 5 };
+                // update context model
+                ctx.Model = new MediaLiteRatingPredictor(mf);
+                
+                var recommender = new LibFmTrainTester();
+
+                // run pipeline
+                var startTime = DateTime.Now;
+                ep.Run();
+                var duration = (int)DateTime.Now.Subtract(startTime).TotalMilliseconds;
+
+                // store test results
+                var testConfig = new TestConfig()
+                {
+                    LowestRMSE = double.Parse(string.Format("{0:0.0000}", ctx["RMSE"])),
+                    FinalRMSE = double.Parse(string.Format("{0:0.0000}", ctx["RMSE"])),
+                    FinalMAE = double.Parse(string.Format("{0:0.0000}", ctx["MAE"])),
+                    Duration = duration,
+                    Name = splitter.Key,
+                    NoTrain = splitter.Value.Train.Count(),
+                    NoTest = splitter.Value.Test.Count(),
+                    NumAuxRatings = 0,
+                    NumSlices = 1,
+                    LibFmTrainTester = recommender
+                };
+
+                configs.Add(testConfig);
+
+                // Log results
+                Log.Logger.Info(testConfig.ToString());
+                resultWriter.WriteLine(testConfig.ToString());
+                resultWriter.Flush();
+            }
+
+            // Write all results
+            Console.WriteLine(TestConfig.GetToStringHeader());
+            configs.Select(c => c.ToString()).ToList().ForEach(Console.WriteLine);
+        }
     }
 }

@@ -13,18 +13,18 @@ namespace WrapRec.RecSys2015
         FmLearnigAlgorithm[] _learningAlgs = new FmLearnigAlgorithm[] 
         { 
             FmLearnigAlgorithm.SGD,
-            FmLearnigAlgorithm.SGDA,
-            FmLearnigAlgorithm.ALS,
+            //FmLearnigAlgorithm.SGDA
+            //FmLearnigAlgorithm.ALS
             FmLearnigAlgorithm.MCMC
         };
 
         int[] _iterations = new int[] { 50 };
 
-        double[] _learningRates = new double[] { 0.002 };
+        double[] _learningRates = new double[] { 0.001 };
         
         string[] _dimenstions = new string[] { "1,1,5" };
 
-        string[] _regulars = new string[] { "0.1,0.1,0.1" };
+        string[] _regulars = new string[] { "0.1,0.1,0.5" };
 
         public List<Func<ItemRating, string>> ContextSelectors { get; private set; }
 
